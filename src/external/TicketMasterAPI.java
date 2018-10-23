@@ -20,7 +20,7 @@ import entity.Item.ItemBuilder;
 public class TicketMasterAPI {
 	private static final String URL = "https://app.ticketmaster.com/discovery/v2/events.json";
 	private static final String DEFAULT_KEYWORD = ""; // no restriction
-	private static final String API_KEY = "US2lb2ExPGGXmvA5GP9gxhioTmWM4M1x";
+	private static final String API_KEY = "xxxxxxxxxxxxxxxxxxxxx"; // Use your own API_KEY here
     
 	/**
 	 * Helper methods
