@@ -1,5 +1,7 @@
 # Events
 
+[![N|Solid](https://cldup.com/dTxpPi9lDf.thumb.png)](https://nodesource.com/products/nsolid)
+
 [![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)](#)
 
 Events is a cloud-enabled, mobile-ready, online-storage recommendation web APP on Java EE.
@@ -23,3 +25,9 @@ Events is a cloud-enabled, mobile-ready, online-storage recommendation web APP o
 [![recommendation](https://user-images.githubusercontent.com/33920615/48034534-cdf58e00-e12d-11e8-8fc4-dbb86d6fdb4a.jpeg)](#)
 **The more items you set as favorite, the more accuracy for us to give choose events for you**
 
+
+## Insights
+##### Events Source
+We use TicketMaster API to gather events, based on your geoIP location.
+All events you viewed are stored in the backend database(MySQL & MongoDB supported), along with login info and favorite info.
+We have an algorithm to determine what kind of events to recommend based on personal favorite items' catagories, view history and other users' favorites, etc.
