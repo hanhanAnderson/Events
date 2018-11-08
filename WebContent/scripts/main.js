@@ -1,439 +1,556 @@
 (function() {
 
-    /**
-     * Variables
-     */
-    var user_id = '1111';
-    var user_fullname = 'admin';
-    var lng = -122.08;
-    var lat = 37.38;
-//   init();
-    /**
-     * Initialize
-     */
-    function init() {
-        // Register event listeners
-        $('nearby-btn').addEventListener('click', loadNearbyItems);
-        $('fav-btn').addEventListener('click', loadFavoriteItems);
-        $('recommend-btn').addEventListener('click', loadRecommendedItems);
+	/**
+	 * Variables
+	 */
+	var user_id = '';
+	var user_fullname = '';
+	var lng = -122.08;
+	var lat = 37.38;
 
-        var welcomeMsg = $('welcome-msg');
-        welcomeMsg.innerHTML = 'Welcome, ' + user_fullname;
-        initGeoLocation();
-    }
+	/**
+	 * Initialize
+	 */
+	function init() {
+		// Register event listeners
+		$('login-btn').addEventListener('click', login);
+		$('nearby-btn').addEventListener('click', loadNearbyItems);
+		$('fav-btn').addEventListener('click', loadFavoriteItems);
+		$('recommend-btn').addEventListener('click', loadRecommendedItems);
 
-    function initGeoLocation() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(onPositionUpdated,
-                onLoadPositionFailed, {
-                    maximumAge: 60000
-                });
-            showLoadingMessage('Retrieving your location...');
-        } else {
-            onLoadPositionFailed();
-        }
-    }
+		validateSession();
 
-    function onPositionUpdated(position) {
-        lat = position.coords.latitude;
-        lng = position.coords.longitude;
+		// onSessionValid({
+		// user_id : '1111',
+		// name : 'John Smith'
+		// });
 
-        loadNearbyItems();
-    }
+		var welcomeMsg = $('welcome-msg');
+		welcomeMsg.innerHTML = 'Welcome, ' + user_fullname;
+		initGeoLocation();
+	}
 
-    function onLoadPositionFailed() {
-        console.warn('navigator.geolocation is not available');
-        getLocationFromIP();
-    }
+	/**
+	 * Session
+	 */
+	function validateSession() {
+		// The request parameters
+		var url = './login';
+		var req = JSON.stringify({});
 
-    function getLocationFromIP() {
-        // Get location from http://ipinfo.io/json
-        var url = 'http://ipinfo.io/json';
-        var req = null;
-        ajax('GET', url, req, function(res) {
-            var result = JSON.parse(res);
-            if ('loc' in result) {
-                var loc = result.loc.split(',');
-                lat = loc[0];
-                lng = loc[1];
-            } else {
-                console.warn('Getting location by IP failed.');
-            }
-            loadNearbyItems();
-        });
-    }
+		// display loading message
+		showLoadingMessage('Validating session...');
 
-    // -----------------------------------
-    // Helper Functions
-    // -----------------------------------
+		// make AJAX call
+		ajax('GET', url, req,
+		// session is still valid
+		function(res) {
+			var result = JSON.parse(res);
 
-    /**
-     * A helper function that makes a navigation button active
-     * 
-     * @param btnId -
-     *            The id of the navigation button
-     */
-    function activeBtn(btnId) {
-        var btns = document.getElementsByClassName('main-nav-btn');
+			if (result.result === 'SUCCESS') {
+				onSessionValid(result);
+			}
+		});
+	}
 
-        // deactivate all navigation buttons
-        for (var i = 0; i < btns.length; i++) {
-            btns[i].className = btns[i].className.replace(/\bactive\b/, '');
-        }
+	function onSessionValid(result) {
+		user_id = result.user_id;
+		user_fullname = result.name;
 
-        // active the one that has id = btnId
-        var btn = $(btnId);
-        btn.className += ' active';
-    }
+		var loginForm = $('login-form');
+		var itemNav = $('item-nav');
+		var itemList = $('item-list');
+		var avatar = $('avatar');
+		var welcomeMsg = $('welcome-msg');
+		var logoutBtn = $('logout-link');
 
-    function showLoadingMessage(msg) {
-        var itemList = $('item-list');
-        itemList.innerHTML = '<p class="notice"><i class="fa fa-spinner fa-spin"></i> ' +
-            msg + '</p>';
-    }
+		welcomeMsg.innerHTML = 'Welcome, ' + user_fullname;
 
-    function showWarningMessage(msg) {
-        var itemList = $('item-list');
-        itemList.innerHTML = '<p class="notice"><i class="fa fa-exclamation-triangle"></i> ' +
-            msg + '</p>';
-    }
+		showElement(itemNav);
+		showElement(itemList);
+		showElement(avatar);
+		showElement(welcomeMsg);
+		showElement(logoutBtn, 'inline-block');
+		hideElement(loginForm);
 
-    function showErrorMessage(msg) {
-        var itemList = $('item-list');
-        itemList.innerHTML = '<p class="notice"><i class="fa fa-exclamation-circle"></i> ' +
-            msg + '</p>';
-    }
+		initGeoLocation();
+	}
 
-    /**
-     * A helper function that creates a DOM element <tag options...>
-     * 
-     * @param tag
-     * @param options
-     * @returns
-     */
-    function $(tag, options) {
-        if (!options) {
-            return document.getElementById(tag);
-        }
+	function onSessionInvalid() {
+		var loginForm = $('login-form');
+		var itemNav = $('item-nav');
+		var itemList = $('item-list');
+		var avatar = $('avatar');
+		var welcomeMsg = $('welcome-msg');
+		var logoutBtn = $('logout-link');
 
-        var element = document.createElement(tag);
+		hideElement(itemNav);
+		hideElement(itemList);
+		hideElement(avatar);
+		hideElement(logoutBtn);
+		hideElement(welcomeMsg);
 
-        for (var option in options) {
-            if (options.hasOwnProperty(option)) {
-                element[option] = options[option];
-            }
-        }
+		showElement(loginForm);
+	}
 
-        return element;
-    }
+	function initGeoLocation() {
+		if (navigator.geolocation) {
+			navigator.geolocation.getCurrentPosition(onPositionUpdated,
+					onLoadPositionFailed, {
+						maximumAge : 60000
+					});
+			showLoadingMessage('Retrieving your location...');
+		} else {
+			onLoadPositionFailed();
+		}
+	}
 
-    function hideElement(element) {
-        element.style.display = 'none';
-    }
+	function onPositionUpdated(position) {
+		lat = position.coords.latitude;
+		lng = position.coords.longitude;
 
-    function showElement(element, style) {
-        var displayStyle = style ? style : 'block';
-        element.style.display = displayStyle;
-    }
+		loadNearbyItems();
+	}
 
-    /**
-     * AJAX helper
-     * 
-     * @param method -
-     *            GET|POST|PUT|DELETE
-     * @param url -
-     *            API end point
-     * @param callback -
-     *            This the successful callback
-     * @param errorHandler -
-     *            This is the failed callback
-     */
-    function ajax(method, url, data, callback, errorHandler) {
-        var xhr = new XMLHttpRequest();
+	function onLoadPositionFailed() {
+		console.warn('navigator.geolocation is not available');
+		getLocationFromIP();
+	}
 
-        xhr.open(method, url, true);
+	function getLocationFromIP() {
+		// Get location from http://ipinfo.io/json
+		var url = 'http://ipinfo.io/json'
+		var req = null;
+		ajax('GET', url, req, function(res) {
+			var result = JSON.parse(res);
+			if ('loc' in result) {
+				var loc = result.loc.split(',');
+				lat = loc[0];
+				lng = loc[1];
+			} else {
+				console.warn('Getting location by IP failed.');
+			}
+			loadNearbyItems();
+		});
+	}
 
-        xhr.onload = function() {
-        	if (xhr.status === 200) {
-        		callback(xhr.responseText);
-        	} else {
-        		errorHandler();
-        	}
-        };
+	// -----------------------------------
+	// Login
+	// -----------------------------------
 
-        xhr.onerror = function() {
-            console.error("The request couldn't be completed.");
-            errorHandler();
-        };
+	function login() {
+		var username = $('username').value;
+		var password = $('password').value;
+		password = md5(username + md5(password));
 
-        if (data === null) {
-            xhr.send();
-        } else {
-            xhr.setRequestHeader("Content-Type",
-                "application/json;charset=utf-8");
-            xhr.send(data);
-        }
-    }
+		// The request parameters
+		var url = './login';
+		var req = JSON.stringify({
+			user_id : username,
+			password : password,
+		});
 
-    // -------------------------------------
-    // AJAX call server-side APIs
-    // -------------------------------------
+		ajax('POST', url, req,
+		// successful callback
+		function(res) {
+			var result = JSON.parse(res);
 
-    /**
-     * API #1 Load the nearby items API end point: [GET]
-     * /Dashi/search?user_id=1111&lat=37.38&lon=-122.08
-     */
-    function loadNearbyItems() {
-        console.log('loadNearbyItems');
-        activeBtn('nearby-btn');
+			// successfully logged in
+			if (result.result === 'SUCCESS') {
+				onSessionValid(result);
+			}
+		},
 
-        // The request parameters
-        var url = './search';
-        var params = 'user_id=' + user_id + '&lat=' + lat + '&lon=' + lng;
-        var req = JSON.stringify({});
+		// error
+		function() {
+			showLoginError();
+		});
+	}
 
-        // display loading message
-        showLoadingMessage('Loading nearby items...');
+	function showLoginError() {
+		$('login-error').innerHTML = 'Invalid username or password';
+	}
 
-        // make AJAX call
-        ajax('GET', url + '?' + params, req,
-            // successful callback
-            function(res) {
-                var items = JSON.parse(res);
-                if (!items || items.length === 0) {
-                    showWarningMessage('No nearby item.');
-                } else {
-                    listItems(items);
-                }
-            },
-            // failed callback
-            function() {
-                showErrorMessage('Cannot load nearby items.');
-            });
-    }
+	function clearLoginError() {
+		$('login-error').innerHTML = '';
+	}
 
-    /**
-     * API #2 Load favorite (or visited) items API end point: [GET]
-     * /Dashi/history?user_id=1111
-     */
-    function loadFavoriteItems() {
-        activeBtn('fav-btn');
+	
+	// -----------------------------------
+	// Helper Functions
+	// -----------------------------------
 
-        // The request parameters
-        var url = './history';
-        var params = 'user_id=' + user_id;
-        var req = JSON.stringify({});
+	/**
+	 * A helper function that makes a navigation button active
+	 * 
+	 * @param btnId -
+	 *            The id of the navigation button
+	 */
+	function activeBtn(btnId) {
+		var btns = document.getElementsByClassName('main-nav-btn');
 
-        // display loading message
-        showLoadingMessage('Loading favorite items...');
+		// deactivate all navigation buttons
+		for (var i = 0; i < btns.length; i++) {
+			btns[i].className = btns[i].className.replace(/\bactive\b/, '');
+		}
 
-        // make AJAX call
-        ajax('GET', url + '?' + params, req, function(res) {
-            var items = JSON.parse(res);
-            if (!items || items.length === 0) {
-                showWarningMessage('No favorite item.');
-            } else {
-                listItems(items);
-            }
-        }, function() {
-            showErrorMessage('Cannot load favorite items.');
-        });
-    }
+		// active the one that has id = btnId
+		var btn = $(btnId);
+		btn.className += ' active';
+	}
 
-    /**
-     * API #3 Load recommended items API end point: [GET]
-     * /Dashi/recommendation?user_id=1111
-     */
-    function loadRecommendedItems() {
-        activeBtn('recommend-btn');
+	function showLoadingMessage(msg) {
+		var itemList = $('item-list');
+		itemList.innerHTML = '<p class="notice"><i class="fa fa-spinner fa-spin"></i> '
+				+ msg + '</p>';
+	}
 
-        // The request parameters
-        var url = './recommendation';
-        var params = 'user_id=' + user_id + '&lat=' + lat + '&lon=' + lng;
+	function showWarningMessage(msg) {
+		var itemList = $('item-list');
+		itemList.innerHTML = '<p class="notice"><i class="fa fa-exclamation-triangle"></i> '
+				+ msg + '</p>';
+	}
 
-        var req = JSON.stringify({});
+	function showErrorMessage(msg) {
+		var itemList = $('item-list');
+		itemList.innerHTML = '<p class="notice"><i class="fa fa-exclamation-circle"></i> '
+				+ msg + '</p>';
+	}
 
-        // display loading message
-        showLoadingMessage('Loading recommended items...');
+	/**
+	 * A helper function that creates a DOM element <tag options...>
+	 * 
+	 * @param tag
+	 * @param options
+	 * @returns
+	 */
+	function $(tag, options) {
+		if (!options) {
+			return document.getElementById(tag);
+		}
 
-        // make AJAX call
-        ajax(
-            'GET',
-            url + '?' + params,
-            req,
-            // successful callback
-            function(res) {
-                var items = JSON.parse(res);
-                if (!items || items.length === 0) {
-                    showWarningMessage('No recommended item. Make sure you have favorites.');
-                } else {
-                    listItems(items);
-                }
-            },
-            // failed callback
-            function() {
-                showErrorMessage('Cannot load recommended items.');
-            });
-    }
+		var element = document.createElement(tag);
 
-    /**
-     * API #4 Toggle favorite (or visited) items
-     * 
-     * @param item_id -
-     *            The item business id
-     * 
-     * API end point: [POST]/[DELETE] /Dashi/history request json data: {
-     * user_id: 1111, visited: [a_list_of_business_ids] }
-     */
-    function changeFavoriteItem(item_id) {
-        // Check whether this item has been visited or not
-        var li = $('item-' + item_id);
-        var favIcon = $('fav-icon-' + item_id);
-        var favorite = li.dataset.favorite !== 'true';
+		for ( var option in options) {
+			if (options.hasOwnProperty(option)) {
+				element[option] = options[option];
+			}
+		}
 
-        // The request parameters
-        var url = './history';
-        var req = JSON.stringify({
-            user_id: user_id,
-            favorite: [item_id]
-        });
-        var method = favorite ? 'POST' : 'DELETE';
+		return element;
+	}
 
-        ajax(method, url, req,
-            // successful callback
-            function(res) {
-                var result = JSON.parse(res);
-                if (result.result === 'SUCCESS') {
-                    li.dataset.favorite = favorite;
-                    favIcon.className = favorite ? 'fa fa-heart' : 'fa fa-heart-o';
-                }
-            });
-    }
+	function hideElement(element) {
+		element.style.display = 'none';
+	}
 
-    // -------------------------------------
-    // Create item list
-    // -------------------------------------
+	function showElement(element, style) {
+		var displayStyle = style ? style : 'block';
+		element.style.display = displayStyle;
+	}
 
-    /**
-     * List items
-     * 
-     * @param items -
-     *            An array of item JSON objects
-     */
-    function listItems(items) {
-        // Clear the current results
-        var itemList = $('item-list');
-        itemList.innerHTML = '';
+	/**
+	 * AJAX helper
+	 * 
+	 * @param method -
+	 *            GET|POST|PUT|DELETE
+	 * @param url -
+	 *            API end point
+	 * @param callback -
+	 *            This the successful callback
+	 * @param errorHandler -
+	 *            This is the failed callback
+	 */
+	function ajax(method, url, data, callback, errorHandler) {
+		var xhr = new XMLHttpRequest();
 
-        for (var i = 0; i < items.length; i++) {
-            addItem(itemList, items[i]);
-        }
-    }
+		xhr.open(method, url, true);
 
-    /**
-     * Add item to the list
-     * 
-     * @param itemList -
-     *            The
-     *            <ul id="item-list">
-     *            tag
-     * @param item -
-     *            The item data (JSON object)
-     */
-    function addItem(itemList, item) {
-        var item_id = item.item_id;
+		xhr.onload = function() {
+			if (xhr.status === 200) {
+				callback(xhr.responseText);
+			} else if (xhr.status === 403) {
+				onSessionInvalid();
+			} else {
+				errorHandler();
+			}
+		};
 
-        // create the <li> tag and specify the id and class attributes
-        var li = $('li', {
-            id: 'item-' + item_id,
-            className: 'item'
-        });
+		xhr.onerror = function() {
+			console.error("The request couldn't be completed.");
+			errorHandler();
+		};
 
-        // set the data attribute
-        li.dataset.item_id = item_id;
-        li.dataset.favorite = item.favorite;
+		if (data === null) {
+			xhr.send();
+		} else {
+			xhr.setRequestHeader("Content-Type",
+					"application/json;charset=utf-8");
+			xhr.send(data);
+		}
+	}
 
-        // item image
-        if (item.image_url) {
-            li.appendChild($('img', {
-                src: item.image_url
-            }));
-        } else {
-            li.appendChild($(
-                'img', {
-                    src: 'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png'
-                }))
-        }
-        // section
-        var section = $('div', {});
+	// -------------------------------------
+	// AJAX call server-side APIs
+	// -------------------------------------
 
-        // title
-        var title = $('a', {
-            href: item.url,
-            target: '_blank',
-            className: 'item-name'
-        });
-        title.innerHTML = item.name;
-        section.appendChild(title);
+	/**
+	 * API #1 Load the nearby items API end point: [GET]
+	 * /Dashi/search?user_id=1111&lat=37.38&lon=-122.08
+	 */
+	function loadNearbyItems() {
+		console.log('loadNearbyItems');
+		activeBtn('nearby-btn');
 
-        // category
-        var category = $('p', {
-            className: 'item-category'
-        });
-        category.innerHTML = 'Category: ' + item.categories.join(', ');
-        section.appendChild(category);
+		// The request parameters
+		var url = './search';
+		var params = 'user_id=' + user_id + '&lat=' + lat + '&lon=' + lng;
+		var req = JSON.stringify({});
 
-        // TODO(vincent). here we might have a problem showing 3.5 as 3.
-        // stars
-        var stars = $('div', {
-            className: 'stars'
-        });
+		// display loading message
+		showLoadingMessage('Loading nearby items...');
 
-        for (var i = 0; i < item.rating; i++) {
-            var star = $('i', {
-                className: 'fa fa-star'
-            });
-            stars.appendChild(star);
-        }
+		// make AJAX call
+		ajax('GET', url + '?' + params, req,
+		// successful callback
+		function(res) {
+			var items = JSON.parse(res);
+			if (!items || items.length === 0) {
+				showWarningMessage('No nearby item.');
+			} else {
+				listItems(items);
+			}
+		},
+		// failed callback
+		function() {
+			showErrorMessage('Cannot load nearby items.');
+		});
+	}
 
-        if (('' + item.rating).match(/\.5$/)) {
-            stars.appendChild($('i', {
-                className: 'fa fa-star-half-o'
-            }));
-        }
+	/**
+	 * API #2 Load favorite (or visited) items API end point: [GET]
+	 * /Dashi/history?user_id=1111
+	 */
+	function loadFavoriteItems() {
+		activeBtn('fav-btn');
 
-        section.appendChild(stars);
+		// The request parameters
+		var url = './history';
+		var params = 'user_id=' + user_id;
+		var req = JSON.stringify({});
 
-        li.appendChild(section);
+		// display loading message
+		showLoadingMessage('Loading favorite items...');
 
-        // address
-        var address = $('p', {
-            className: 'item-address'
-        });
+		// make AJAX call
+		ajax('GET', url + '?' + params, req, function(res) {
+			var items = JSON.parse(res);
+			if (!items || items.length === 0) {
+				showWarningMessage('No favorite item.');
+			} else {
+				listItems(items);
+			}
+		}, function() {
+			showErrorMessage('Cannot load favorite items.');
+		});
+	}
 
-        address.innerHTML = item.address.replace(/,/g, '<br/>').replace(/\"/g,
-            '');
-        li.appendChild(address);
+	/**
+	 * API #3 Load recommended items API end point: [GET]
+	 * /Dashi/recommendation?user_id=1111
+	 */
+	function loadRecommendedItems() {
+		activeBtn('recommend-btn');
 
-        // favorite link
-        var favLink = $('p', {
-            className: 'fav-link'
-        });
+		// The request parameters
+		var url = './recommendation';
+		var params = 'user_id=' + user_id + '&lat=' + lat + '&lon=' + lng;
 
-        favLink.onclick = function() {
-            changeFavoriteItem(item_id);
-        };
+		var req = JSON.stringify({});
 
-        favLink.appendChild($('i', {
-            id: 'fav-icon-' + item_id,
-            className: item.favorite ? 'fa fa-heart' : 'fa fa-heart-o'
-        }));
+		// display loading message
+		showLoadingMessage('Loading recommended items...');
 
-        li.appendChild(favLink);
+		// make AJAX call
+		ajax(
+				'GET',
+				url + '?' + params,
+				req,
+				// successful callback
+				function(res) {
+					var items = JSON.parse(res);
+					if (!items || items.length === 0) {
+						showWarningMessage('No recommended item. Make sure you have favorites.');
+					} else {
+						listItems(items);
+					}
+				},
+				// failed callback
+				function() {
+					showErrorMessage('Cannot load recommended items.');
+				});
+	}
 
-        itemList.appendChild(li);
-    }
+	/**
+	 * API #4 Toggle favorite (or visited) items
+	 * 
+	 * @param item_id -
+	 *            The item business id
+	 * 
+	 * API end point: [POST]/[DELETE] /Dashi/history request json data: {
+	 * user_id: 1111, visited: [a_list_of_business_ids] }
+	 */
+	function changeFavoriteItem(item_id) {
+		// Check whether this item has been visited or not
+		var li = $('item-' + item_id);
+		var favIcon = $('fav-icon-' + item_id);
+		var favorite = li.dataset.favorite !== 'true';
 
-    init();
+		// The request parameters
+		var url = './history';
+		var req = JSON.stringify({
+			user_id : user_id,
+			favorite : [ item_id ]
+		});
+		var method = favorite ? 'POST' : 'DELETE';
+
+		ajax(method, url, req,
+		// successful callback
+		function(res) {
+			var result = JSON.parse(res);
+			if (result.result === 'SUCCESS') {
+				li.dataset.favorite = favorite;
+				favIcon.className = favorite ? 'fa fa-heart' : 'fa fa-heart-o';
+			}
+		});
+	}
+
+	// -------------------------------------
+	// Create item list
+	// -------------------------------------
+
+	/**
+	 * List items
+	 * 
+	 * @param items -
+	 *            An array of item JSON objects
+	 */
+	function listItems(items) {
+		// Clear the current results
+		var itemList = $('item-list');
+		itemList.innerHTML = '';
+
+		for (var i = 0; i < items.length; i++) {
+			addItem(itemList, items[i]);
+		}
+	}
+
+	/**
+	 * Add item to the list
+	 * 
+	 * @param itemList -
+	 *            The
+	 *            <ul id="item-list">
+	 *            tag
+	 * @param item -
+	 *            The item data (JSON object)
+	 */
+	function addItem(itemList, item) {
+		var item_id = item.item_id;
+
+		// create the <li> tag and specify the id and class attributes
+		var li = $('li', {
+			id : 'item-' + item_id,
+			className : 'item'
+		});
+
+		// set the data attribute
+		li.dataset.item_id = item_id;
+		li.dataset.favorite = item.favorite;
+
+		// item image
+		if (item.image_url) {
+			li.appendChild($('img', {
+				src : item.image_url
+			}));
+		} else {
+			li
+					.appendChild($(
+							'img',
+							{
+								src : 'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png'
+							}))
+		}
+		// section
+		var section = $('div', {});
+
+		// title
+		var title = $('a', {
+			href : item.url,
+			target : '_blank',
+			className : 'item-name'
+		});
+		title.innerHTML = item.name;
+		section.appendChild(title);
+
+		// category
+		var category = $('p', {
+			className : 'item-category'
+		});
+		category.innerHTML = 'Category: ' + item.categories.join(', ');
+		section.appendChild(category);
+
+		// TODO(vincent). here we might have a problem showing 3.5 as 3.
+		// stars
+		var stars = $('div', {
+			className : 'stars'
+		});
+
+		for (var i = 0; i < item.rating; i++) {
+			var star = $('i', {
+				className : 'fa fa-star'
+			});
+			stars.appendChild(star);
+		}
+
+		if (('' + item.rating).match(/\.5$/)) {
+			stars.appendChild($('i', {
+				className : 'fa fa-star-half-o'
+			}));
+		}
+
+		section.appendChild(stars);
+
+		li.appendChild(section);
+
+		// address
+		var address = $('p', {
+			className : 'item-address'
+		});
+
+		address.innerHTML = item.address.replace(/,/g, '<br/>').replace(/\"/g,
+				'');
+		li.appendChild(address);
+
+		// favorite link
+		var favLink = $('p', {
+			className : 'fav-link'
+		});
+
+		favLink.onclick = function() {
+			changeFavoriteItem(item_id);
+		};
+
+		favLink.appendChild($('i', {
+			id : 'fav-icon-' + item_id,
+			className : item.favorite ? 'fa fa-heart' : 'fa fa-heart-o'
+		}));
+
+		li.appendChild(favLink);
+
+		itemList.appendChild(li);
+	}
+
+	init();
 
 })();
