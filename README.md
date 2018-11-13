@@ -15,18 +15,19 @@ Events is a cloud-enabled, mobile-ready, online-storage recommendation web APP o
   - Login / Logout feature
 
 # Show events!
-
+**Login**
+[![login](https://user-images.githubusercontent.com/33920615/48434995-4de0b100-e749-11e8-9418-0323b1d7c75d.png)](#)
 **Some events around you will pop up when you visit the index page!**
-[![events](https://user-images.githubusercontent.com/33920615/48034279-b8cc2f80-e12c-11e8-9aab-230e32d0338e.jpeg)](#)
+[![events](https://user-images.githubusercontent.com/33920615/48434996-4de0b100-e749-11e8-82b0-77c00c8800d3.png)](#)
 > *Your location is based on your GeoIP, for demo use only and no further use.
 
 # Make favorite
 **You can simply click the HEART icon, the system would record this**
-[![favorite](https://user-images.githubusercontent.com/33920615/48034474-8a9b1f80-e12d-11e8-9787-8ba7c4cd449f.jpeg)](#)
+[![favorite](https://user-images.githubusercontent.com/33920615/48434997-4de0b100-e749-11e8-9ee4-8d29216e2e18.png)](#)
 
 # Show Recommendation
 **When you pick some of your favorite items, click "Recommendation" to see events you may like!**
-[![recommendation](https://user-images.githubusercontent.com/33920615/48034534-cdf58e00-e12d-11e8-8fc4-dbb86d6fdb4a.jpeg)](#)
+[![recommendation](https://user-images.githubusercontent.com/33920615/48434998-4de0b100-e749-11e8-9ce5-f8c3d4894835.png)](#)
 **The more items you set as favorite, the more accuracy for us to give choose events for you**
 
 ## Insights
