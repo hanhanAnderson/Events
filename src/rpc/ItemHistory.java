@@ -76,7 +76,7 @@ public class ItemHistory extends HttpServlet {
 			conn.close();
 			
 			RpcHelper.writeJsonObject(response, 
-					new JSONObject().put("result:", "SUCCESS"));
+					new JSONObject().put("result", "SUCCESS"));
 		}catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -101,7 +101,7 @@ public class ItemHistory extends HttpServlet {
 			conn.close();
 			
 			RpcHelper.writeJsonObject(response, 
-					new JSONObject().put("result:", "SUCCESS"));
+					new JSONObject().put("result", "SUCCESS"));
 		}catch (Exception e) {
 			e.printStackTrace();
 		}
